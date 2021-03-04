@@ -2,10 +2,8 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
 set(AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME localproxy)
 set(AWS_TUNNEL_LOCAL_PROXY_LIB_NAME lproxy)
-set(AWS_TUNNEL_LOCAL_PROXY_TEST_NAME localproxytest)
 
 project(${AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME} CXX)
-project(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} CXX)
 
 ######################################
 # Section : Disable in-source builds #
@@ -28,10 +26,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Configure Compiler flags
 if (UNIX OR APPLE)
     set(CUSTOM_COMPILER_FLAGS "-O2 -D_FORTIFY_SOURCE=2 -fPIE -Wall -Werror")
-    set(TEST_COMPILER_FLAGS "${CUSTOM_COMPILER_FLAGS} -D_AWSIOT_TUNNELING_NO_SSL")
 elseif (WIN32 OR MSVC)
     set(CUSTOM_COMPILER_FLAGS "/W4 /DYNAMICBASE /NXCOMPAT /analyze")
-    set(TEST_COMPILER_FLAGS "${CUSTOM_COMPILER_FLAGS} /D_AWSIOT_TUNNELING_NO_SSL")
     add_definitions(-D_WIN32_WINNT=${WIN32_WINNT})
 endif ()
 
@@ -84,15 +80,12 @@ file(GLOB ALL_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 set(UTIL_SOURCE ${PROJECT_SOURCE_DIR}/src/config/ConfigFile.cpp)
 set(CORE_SOURCES ${PROJECT_SOURCE_DIR}/src/TcpAdapterProxy.cpp ${PROJECT_SOURCE_DIR}/src/ProxySettings.cpp ${PROTO_HDRS} ${PROTO_SRCS})
 set(MAIN_SOURCES ${PROJECT_SOURCE_DIR}/src/main.cpp ${CORE_SOURCES} ${UTIL_SOURCE})
-set(TEST_SOURCES ${PROJECT_SOURCE_DIR}/test/AdapterTests.cpp ${CORE_SOURCES} ${UTIL_SOURCE} ${PROJECT_SOURCE_DIR}/test/TestWebsocketServer.cpp)
 
 add_executable(${AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME} ${MAIN_SOURCES})
-add_executable(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} ${TEST_SOURCES})
 
 #libatomic ensured for all platforms except OSX and WINDOWS
 if(NOT APPLE AND NOT MSVC)
     target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME} atomic)
-    target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} atomic)
 endif()
 
 target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME} ${CMAKE_THREAD_LIBS_INIT})
@@ -103,13 +96,6 @@ target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME} ${Protobuf_LITE_STAT
 
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} OpenSSL::SSL)
-target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} OpenSSL::Crypto)
-target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} ${Boost_STATIC_LIBRARIES})
-target_link_libraries(${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} ${Protobuf_LITE_STATIC_LIBRARY})
-
 
 set_property(TARGET ${AWS_TUNNEL_LOCAL_PROXY_TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${CUSTOM_COMPILER_FLAGS})
-set_property(TARGET ${AWS_TUNNEL_LOCAL_PROXY_TEST_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${TEST_COMPILER_FLAGS})
 
